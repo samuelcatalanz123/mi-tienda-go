@@ -15,6 +15,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", homeHandler) // la página web de la tienda
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /productos", listarHandler(store))
 	mux.HandleFunc("POST /productos", crearHandler(store))

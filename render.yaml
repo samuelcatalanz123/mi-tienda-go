@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: mi-tienda-go
+    runtime: go
+    buildCommand: go build -o app .
+    startCommand: ./app
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true

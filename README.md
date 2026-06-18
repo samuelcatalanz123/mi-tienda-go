@@ -28,8 +28,8 @@ Registro y login con **JWT** + contraseñas cifradas (**bcrypt**). Carrito por u
 - `POST /registro` · `POST /login` (devuelven token)
 - `POST /carrito` · `GET /carrito` · `DELETE /carrito/{id}` (requieren token)
 
-## 🛣️ Próxima etapa
-- **Etapa 3:** la página web (frontend) + desplegar en la nube.
+## ✅ Etapa 3 (esta) — Página web + despliegue
+Página web (frontend) servida por el propio servidor Go: ver productos, registrarse, iniciar sesión, agregar al carrito y ver el total. Lista para desplegar en Render (incluye render.yaml).
 
 ## 🛠️ Tecnología
 Go, SQLite, **JWT**, **bcrypt**, pruebas + CI (GitHub Actions), CORS.

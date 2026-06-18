@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🛒 Mi Tienda</title>
+  <style>
+    :root { --azul:#1a73e8; --verde:#34a853; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif; background:#f4f6fb; color:#1f2733; }
+    header { background:linear-gradient(135deg,#1a73e8,#6c4ee0); color:#fff; padding:16px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size:20px; }
+    header button { background:rgba(255,255,255,.2); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px; }
+    main { max-width:760px; margin:0 auto; padding:16px; }
+    .card { background:#fff; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .card h2 { margin:0 0 12px; font-size:17px; color:var(--azul); }
+    input { width:100%; padding:11px; border:1px solid #dbe2ee; border-radius:10px; font-size:14px; margin:5px 0; }
+    button.b { background:var(--azul); color:#fff; border:none; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:700; cursor:pointer; }
+    button.v { background:var(--verde); }
+    button.g { background:#e2e8f2; color:#333; }
+    .prod { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eef1f6; padding:10px 0; }
+    .prod:last-child { border:none; }
+    .prod .n { font-weight:700; }
+    .prod .p { color:var(--verde); font-weight:800; }
+    .prod small { color:#7a8699; }
+    .fila { display:flex; gap:8px; flex-wrap:wrap; }
+    #estado { font-size:13px; }
+    .total { text-align:right; font-size:18px; font-weight:800; color:var(--azul); margin-top:8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛒 Mi Tienda</h1>
+    <button onclick="verCarrito()">🛍️ Mi carrito</button>
+  </header>
+
+  <main>
+    <!-- Cuenta -->
+    <div class="card">
+      <h2>👤 Mi cuenta <span id="estado" style="color:#7a8699;font-weight:400;"></span></h2>
+      <div id="formCuenta">
+        <input id="email" type="email" placeholder="Correo" />
+        <input id="pass" type="password" placeholder="Contraseña" />
+        <div class="fila">
+          <button class="b" onclick="entrar()">Entrar</button>
+          <button class="b g" onclick="registrar()">Crear cuenta</button>
+        </div>
+      </div>
+      <button class="b g" id="btnSalir" style="display:none;" onclick="salir()">Cerrar sesión</button>
+    </div>
+
+    <!-- Productos -->
+    <div class="card">
+      <h2>🏷️ Productos</h2>
+      <div id="productos">Cargando…</div>
+    </div>
+
+    <!-- Agregar producto -->
+    <div class="card">
+      <h2>➕ Agregar un producto</h2>
+      <input id="pn" type="text" placeholder="Nombre" />
+      <div class="fila">
+        <input id="pp" type="number" placeholder="Precio" style="flex:1;" />
+        <input id="ps" type="number" placeholder="Stock" style="flex:1;" />
+      </div>
+      <button class="b v" onclick="agregarProducto()">Guardar producto</button>
+    </div>
+
+    <!-- Carrito -->
+    <div class="card" id="cardCarrito" style="display:none;">
+      <h2>🛍️ Mi carrito</h2>
+      <div id="carrito"></div>
+      <div class="total" id="total"></div>
+    </div>
+  </main>
+
+  <script>
+    const API = ""; // mismo servidor
+    let token = localStorage.getItem("token") || "";
+
+    function pintarEstado() {
+      const e = document.getElementById("estado");
+      if (token) {
+        e.textContent = "· sesión iniciada ✅";
+        document.getElementById("formCuenta").style.display = "none";
+        document.getElementById("btnSalir").style.display = "inline-block";
+      } else {
+        e.textContent = "· sin sesión";
+        document.getElementById("formCuenta").style.display = "block";
+        document.getElementById("btnSalir").style.display = "none";
+      }
+    }
+
+    async function cargarProductos() {
+      const r = await fetch(API + "/productos");
+      const ps = await r.json();
+      const cont = document.getElementById("productos");
+      if (!ps.length) { cont.innerHTML = "<small>No hay productos todavía. ¡Agrega uno abajo!</small>"; return; }
+      cont.innerHTML = ps.map((p) =>
+        `<div class="prod">
+          <div><div class="n">${p.nombre}</div><small>Stock: ${p.stock}</small></div>
+          <div style="text-align:right;">
+            <div class="p">Q${p.precio}</div>
+            <button class="b" style="padding:6px 10px;font-size:13px;margin-top:4px;" onclick="agregarCarrito(${p.id})">🛒 Agregar</button>
+          </div>
+        </div>`).join("");
+    }
+
+    async function agregarProducto() {
+      const nombre = document.getElementById("pn").value.trim();
+      const precio = parseFloat(document.getElementById("pp").value) || 0;
+      const stock = parseInt(document.getElementById("ps").value) || 0;
+      if (!nombre) { alert("Escribe el nombre del producto."); return; }
+      await fetch(API + "/productos", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, precio, stock }),
+      });
+      document.getElementById("pn").value = "";
+      document.getElementById("pp").value = "";
+      document.getElementById("ps").value = "";
+      cargarProductos();
+    }
+
+    async function registrar() { cuenta("/registro"); }
+    async function entrar() { cuenta("/login"); }
+    async function cuenta(ruta) {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("pass").value;
+      const r = await fetch(API + ruta, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const d = await r.json();
+      if (r.ok && d.token) {
+        token = d.token; localStorage.setItem("token", token); pintarEstado();
+        alert("¡Bienvenido! 🎉");
+      } else {
+        alert("⚠️ " + (d.error || "No se pudo."));
+      }
+    }
+    function salir() { token = ""; localStorage.removeItem("token"); pintarEstado(); }
+
+    async function agregarCarrito(id) {
+      if (!token) { alert("Primero inicia sesión o crea una cuenta. 🙂"); return; }
+      const r = await fetch(API + "/carrito", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ producto_id: id, cantidad: 1 }),
+      });
+      if (r.ok) alert("¡Agregado al carrito! 🛒");
+      else alert("⚠️ No se pudo agregar.");
+    }
+
+    async function verCarrito() {
+      if (!token) { alert("Inicia sesión para ver tu carrito. 🙂"); return; }
+      const r = await fetch(API + "/carrito", { headers: { "Authorization": "Bearer " + token } });
+      const d = await r.json();
+      document.getElementById("cardCarrito").style.display = "block";
+      const cont = document.getElementById("carrito");
+      if (!d.items || !d.items.length) { cont.innerHTML = "<small>Tu carrito está vacío.</small>"; document.getElementById("total").textContent = ""; return; }
+      cont.innerHTML = d.items.map((it) =>
+        `<div class="prod">
+          <div><div class="n">${it.nombre}</div><small>${it.cantidad} × Q${it.precio}</small></div>
+          <div style="text-align:right;">
+            <div class="p">Q${it.subtotal}</div>
+            <button class="b g" style="padding:5px 9px;font-size:12px;margin-top:4px;" onclick="quitar(${it.id})">🗑️ Quitar</button>
+          </div>
+        </div>`).join("");
+      document.getElementById("total").textContent = "Total: Q" + d.total;
+      document.getElementById("cardCarrito").scrollIntoView({ behavior: "smooth" });
+    }
+
+    async function quitar(id) {
+      await fetch(API + "/carrito/" + id, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
+      verCarrito();
+    }
+
+    pintarEstado();
+    cargarProductos();
+  </script>
+</body>
+</html>
