@@ -1,4 +1,7 @@
-# 🛒 Mi Tienda — Backend (Go)
+# 🛒 Mi Tienda — Tienda online full-stack (Go)
+
+🌐 **Tienda EN VIVO:** https://mi-tienda-go.onrender.com
+📦 **Código:** https://github.com/samuelcatalanz123/mi-tienda-go
 
 API REST de una tienda online, hecha en **Go** con base de datos **SQLite**.
 Este es el **proyecto grande** de Samuel, construido por etapas. 🚀
