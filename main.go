@@ -22,6 +22,13 @@ func main() {
 	mux.HandleFunc("PUT /productos/{id}", actualizarHandler(store))
 	mux.HandleFunc("DELETE /productos/{id}", borrarHandler(store))
 
+	// Etapa 2: usuarios y carrito
+	mux.HandleFunc("POST /registro", registroHandler(store))
+	mux.HandleFunc("POST /login", loginHandler(store))
+	mux.HandleFunc("POST /carrito", protegido(agregarCarritoHandler(store)))
+	mux.HandleFunc("GET /carrito", protegido(verCarritoHandler(store)))
+	mux.HandleFunc("DELETE /carrito/{id}", protegido(quitarCarritoHandler(store)))
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

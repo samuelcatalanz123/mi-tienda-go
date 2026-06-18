@@ -3,7 +3,7 @@
 API REST de una tienda online, hecha en **Go** con base de datos **SQLite**.
 Este es el **proyecto grande** de Samuel, construido por etapas. 🚀
 
-## ✅ Etapa 1 (esta) — Productos
+## ✅ Etapa 1 — Productos
 CRUD completo de productos: crear, listar, ver, actualizar y borrar.
 
 ### Endpoints
@@ -21,11 +21,17 @@ go run .        # arranca en :8080
 go test ./...   # pruebas
 ```
 
-## 🛣️ Próximas etapas
-- **Etapa 2:** login de usuarios + carrito de compras.
+## ✅ Etapa 2 (esta) — Usuarios y carrito
+Registro y login con **JWT** + contraseñas cifradas (**bcrypt**). Carrito por usuario con total.
+
+### Endpoints nuevos
+- `POST /registro` · `POST /login` (devuelven token)
+- `POST /carrito` · `GET /carrito` · `DELETE /carrito/{id}` (requieren token)
+
+## 🛣️ Próxima etapa
 - **Etapa 3:** la página web (frontend) + desplegar en la nube.
 
 ## 🛠️ Tecnología
-Go (librería estándar), SQLite, pruebas + CI (GitHub Actions), CORS.
+Go, SQLite, **JWT**, **bcrypt**, pruebas + CI (GitHub Actions), CORS.
 
 Hecho por **Samuel Catalán** 🇬🇹

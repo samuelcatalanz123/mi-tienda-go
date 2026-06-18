@@ -26,15 +26,30 @@ func NewStore(ruta string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS productos (
-		id          INTEGER PRIMARY KEY AUTOINCREMENT,
-		nombre      TEXT NOT NULL,
-		precio      REAL NOT NULL,
-		stock       INTEGER NOT NULL DEFAULT 0,
-		descripcion TEXT
-	)`)
-	if err != nil {
-		return nil, err
+	tablas := []string{
+		`CREATE TABLE IF NOT EXISTS productos (
+			id          INTEGER PRIMARY KEY AUTOINCREMENT,
+			nombre      TEXT NOT NULL,
+			precio      REAL NOT NULL,
+			stock       INTEGER NOT NULL DEFAULT 0,
+			descripcion TEXT
+		)`,
+		`CREATE TABLE IF NOT EXISTS usuarios (
+			id            INTEGER PRIMARY KEY AUTOINCREMENT,
+			email         TEXT NOT NULL UNIQUE,
+			password_hash TEXT NOT NULL
+		)`,
+		`CREATE TABLE IF NOT EXISTS carrito (
+			id          INTEGER PRIMARY KEY AUTOINCREMENT,
+			usuario_id  INTEGER NOT NULL,
+			producto_id INTEGER NOT NULL,
+			cantidad    INTEGER NOT NULL DEFAULT 1
+		)`,
+	}
+	for _, t := range tablas {
+		if _, err := db.Exec(t); err != nil {
+			return nil, err
+		}
 	}
 	return &Store{db: db}, nil
 }
