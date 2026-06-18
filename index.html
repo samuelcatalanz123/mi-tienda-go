@@ -55,10 +55,11 @@
       <div id="productos">Cargando…</div>
     </div>
 
-    <!-- Agregar producto -->
-    <div class="card">
+    <!-- Agregar producto (solo admin/logueado) -->
+    <div class="card" id="cardAdmin" style="display:none;">
       <h2>➕ Agregar un producto</h2>
       <input id="pn" type="text" placeholder="Nombre" />
+      <input id="pi" type="text" placeholder="URL de la imagen (opcional)" />
       <div class="fila">
         <input id="pp" type="number" placeholder="Precio" style="flex:1;" />
         <input id="ps" type="number" placeholder="Stock" style="flex:1;" />
@@ -84,10 +85,12 @@
         e.textContent = "· sesión iniciada ✅";
         document.getElementById("formCuenta").style.display = "none";
         document.getElementById("btnSalir").style.display = "inline-block";
+        document.getElementById("cardAdmin").style.display = "block";
       } else {
         e.textContent = "· sin sesión";
         document.getElementById("formCuenta").style.display = "block";
         document.getElementById("btnSalir").style.display = "none";
+        document.getElementById("cardAdmin").style.display = "none";
       }
     }
 
@@ -98,7 +101,10 @@
       if (!ps.length) { cont.innerHTML = "<small>No hay productos todavía. ¡Agrega uno abajo!</small>"; return; }
       cont.innerHTML = ps.map((p) =>
         `<div class="prod">
-          <div><div class="n">${p.nombre}</div><small>Stock: ${p.stock}</small></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${p.imagen ? `<img src="${p.imagen}" style="width:46px;height:46px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : ""}
+            <div><div class="n">${p.nombre}</div><small>Stock: ${p.stock}</small></div>
+          </div>
           <div style="text-align:right;">
             <div class="p">Q${p.precio}</div>
             <button class="b" style="padding:6px 10px;font-size:13px;margin-top:4px;" onclick="agregarCarrito(${p.id})">🛒 Agregar</button>
@@ -107,15 +113,20 @@
     }
 
     async function agregarProducto() {
+      if (!token) { alert("Inicia sesión para agregar productos."); return; }
       const nombre = document.getElementById("pn").value.trim();
+      const imagen = document.getElementById("pi").value.trim();
       const precio = parseFloat(document.getElementById("pp").value) || 0;
       const stock = parseInt(document.getElementById("ps").value) || 0;
       if (!nombre) { alert("Escribe el nombre del producto."); return; }
-      await fetch(API + "/productos", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, precio, stock }),
+      const r = await fetch(API + "/productos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ nombre, precio, stock, imagen }),
       });
+      if (!r.ok) { alert("⚠️ No se pudo (¿iniciaste sesión?)."); return; }
       document.getElementById("pn").value = "";
+      document.getElementById("pi").value = "";
       document.getElementById("pp").value = "";
       document.getElementById("ps").value = "";
       cargarProductos();
@@ -167,12 +178,26 @@
           </div>
         </div>`).join("");
       document.getElementById("total").textContent = "Total: Q" + d.total;
+      cont.innerHTML += `<button class="b v" style="width:100%;margin-top:10px;" onclick="comprar()">🛍️ Finalizar compra</button>`;
       document.getElementById("cardCarrito").scrollIntoView({ behavior: "smooth" });
     }
 
     async function quitar(id) {
       await fetch(API + "/carrito/" + id, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
       verCarrito();
+    }
+
+    async function comprar() {
+      const r = await fetch(API + "/pedidos", {
+        method: "POST", headers: { "Authorization": "Bearer " + token },
+      });
+      const d = await r.json();
+      if (r.ok) {
+        alert("¡Pedido realizado! 🎉\nTotal: Q" + d.pedido.total + "\n" + d.pedido.resumen);
+        verCarrito();
+      } else {
+        alert("⚠️ " + (d.error || "No se pudo comprar."));
+      }
     }
 
     pintarEstado();

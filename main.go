@@ -18,10 +18,11 @@ func main() {
 	mux.HandleFunc("GET /{$}", homeHandler) // la página web de la tienda
 	mux.HandleFunc("GET /health", healthHandler)
 	mux.HandleFunc("GET /productos", listarHandler(store))
-	mux.HandleFunc("POST /productos", crearHandler(store))
 	mux.HandleFunc("GET /productos/{id}", obtenerHandler(store))
-	mux.HandleFunc("PUT /productos/{id}", actualizarHandler(store))
-	mux.HandleFunc("DELETE /productos/{id}", borrarHandler(store))
+	// Agregar/editar/borrar productos requiere haber iniciado sesión (admin).
+	mux.HandleFunc("POST /productos", protegido(soloLogueado(crearHandler(store))))
+	mux.HandleFunc("PUT /productos/{id}", protegido(soloLogueado(actualizarHandler(store))))
+	mux.HandleFunc("DELETE /productos/{id}", protegido(soloLogueado(borrarHandler(store))))
 
 	// Etapa 2: usuarios y carrito
 	mux.HandleFunc("POST /registro", registroHandler(store))
@@ -29,6 +30,10 @@ func main() {
 	mux.HandleFunc("POST /carrito", protegido(agregarCarritoHandler(store)))
 	mux.HandleFunc("GET /carrito", protegido(verCarritoHandler(store)))
 	mux.HandleFunc("DELETE /carrito/{id}", protegido(quitarCarritoHandler(store)))
+
+	// Etapa 4: pedidos (finalizar compra)
+	mux.HandleFunc("POST /pedidos", protegido(crearPedidoHandler(store)))
+	mux.HandleFunc("GET /pedidos", protegido(verPedidosHandler(store)))
 
 	port := os.Getenv("PORT")
 	if port == "" {

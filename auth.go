@@ -75,6 +75,12 @@ func ParseToken(tokenString string) (int64, error) {
 	return int64(id), nil
 }
 
+// soloLogueado convierte un handler normal en uno que requiere login (ignora
+// quién es, solo exige que haya iniciado sesión). Útil para "admin".
+func soloLogueado(h http.HandlerFunc) func(http.ResponseWriter, *http.Request, int64) {
+	return func(w http.ResponseWriter, r *http.Request, _ int64) { h(w, r) }
+}
+
 // protegido envuelve un handler que necesita usuario logueado. Lee el token del
 // header "Authorization: Bearer <token>" y le pasa el id del usuario al handler.
 func protegido(h func(http.ResponseWriter, *http.Request, int64)) http.HandlerFunc {

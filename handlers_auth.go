@@ -83,6 +83,30 @@ func verCarritoHandler(s *Store) func(http.ResponseWriter, *http.Request, int64)
 	}
 }
 
+// POST /pedidos → finaliza la compra (convierte el carrito en pedido).
+func crearPedidoHandler(s *Store) func(http.ResponseWriter, *http.Request, int64) {
+	return func(w http.ResponseWriter, r *http.Request, userID int64) {
+		ped, err := s.CrearPedido(userID)
+		if err != nil {
+			escribirJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		escribirJSON(w, 201, map[string]any{"mensaje": "¡Pedido realizado! 🎉", "pedido": ped})
+	}
+}
+
+// GET /pedidos → lista los pedidos del usuario.
+func verPedidosHandler(s *Store) func(http.ResponseWriter, *http.Request, int64) {
+	return func(w http.ResponseWriter, r *http.Request, userID int64) {
+		pedidos, err := s.VerPedidos(userID)
+		if err != nil {
+			escribirJSON(w, 500, map[string]string{"error": "no se pudieron leer los pedidos"})
+			return
+		}
+		escribirJSON(w, 200, pedidos)
+	}
+}
+
 // DELETE /carrito/{id} → quita una línea del carrito (requiere login).
 func quitarCarritoHandler(s *Store) func(http.ResponseWriter, *http.Request, int64) {
 	return func(w http.ResponseWriter, r *http.Request, userID int64) {
