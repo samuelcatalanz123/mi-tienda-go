@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-
-	_ "modernc.org/sqlite"
 )
 
 // Producto es un artículo de la tienda.
@@ -16,62 +14,39 @@ type Producto struct {
 	Imagen      string  `json:"imagen"`
 }
 
-// Store guarda la conexión a la base de datos.
+// Store guarda la conexión a la base de datos y qué tipo es ("sqlite" o "postgres").
 type Store struct {
-	db *sql.DB
+	db     *sql.DB
+	driver string
 }
 
-// NewStore abre (o crea) la base de datos y prepara la tabla de productos.
+// NewStore abre (o crea) la base de datos y prepara las tablas. Usa SQLite en
+// local y PostgreSQL en Render (según la variable DATABASE_URL).
 func NewStore(ruta string) (*Store, error) {
-	db, err := sql.Open("sqlite", ruta)
+	db, driver, err := abrirDB(ruta)
 	if err != nil {
 		return nil, err
 	}
-	tablas := []string{
-		`CREATE TABLE IF NOT EXISTS productos (
-			id          INTEGER PRIMARY KEY AUTOINCREMENT,
-			nombre      TEXT NOT NULL,
-			precio      REAL NOT NULL,
-			stock       INTEGER NOT NULL DEFAULT 0,
-			descripcion TEXT,
-			imagen      TEXT
-		)`,
-		`CREATE TABLE IF NOT EXISTS pedidos (
-			id         INTEGER PRIMARY KEY AUTOINCREMENT,
-			usuario_id INTEGER NOT NULL,
-			resumen    TEXT NOT NULL,
-			total      REAL NOT NULL,
-			fecha      TEXT NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS usuarios (
-			id            INTEGER PRIMARY KEY AUTOINCREMENT,
-			email         TEXT NOT NULL UNIQUE,
-			password_hash TEXT NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS carrito (
-			id          INTEGER PRIMARY KEY AUTOINCREMENT,
-			usuario_id  INTEGER NOT NULL,
-			producto_id INTEGER NOT NULL,
-			cantidad    INTEGER NOT NULL DEFAULT 1
-		)`,
+	if err := db.Ping(); err != nil {
+		return nil, err
 	}
-	for _, t := range tablas {
+	for _, t := range tablas(driver) {
 		if _, err := db.Exec(t); err != nil {
 			return nil, err
 		}
 	}
-	return &Store{db: db}, nil
+	return &Store{db: db, driver: driver}, nil
 }
 
 // Crear guarda un producto nuevo y devuelve el producto con su id.
 func (s *Store) Crear(p Producto) (Producto, error) {
-	res, err := s.db.Exec(
+	id, err := s.insertID(
 		"INSERT INTO productos (nombre, precio, stock, descripcion, imagen) VALUES (?, ?, ?, ?, ?)",
 		p.Nombre, p.Precio, p.Stock, p.Descripcion, p.Imagen)
 	if err != nil {
 		return Producto{}, err
 	}
-	p.ID, _ = res.LastInsertId()
+	p.ID = id
 	return p, nil
 }
 
@@ -98,7 +73,7 @@ func (s *Store) Listar() ([]Producto, error) {
 func (s *Store) Obtener(id int64) (Producto, bool, error) {
 	var p Producto
 	err := s.db.QueryRow(
-		"SELECT id, nombre, precio, stock, descripcion, imagen FROM productos WHERE id = ?", id).
+		s.rb("SELECT id, nombre, precio, stock, descripcion, imagen FROM productos WHERE id = ?"), id).
 		Scan(&p.ID, &p.Nombre, &p.Precio, &p.Stock, &p.Descripcion, &p.Imagen)
 	if err == sql.ErrNoRows {
 		return Producto{}, false, nil
@@ -112,7 +87,7 @@ func (s *Store) Obtener(id int64) (Producto, bool, error) {
 // Actualizar cambia un producto existente. Devuelve false si no existía.
 func (s *Store) Actualizar(id int64, p Producto) (bool, error) {
 	res, err := s.db.Exec(
-		"UPDATE productos SET nombre=?, precio=?, stock=?, descripcion=?, imagen=? WHERE id=?",
+		s.rb("UPDATE productos SET nombre=?, precio=?, stock=?, descripcion=?, imagen=? WHERE id=?"),
 		p.Nombre, p.Precio, p.Stock, p.Descripcion, p.Imagen, id)
 	if err != nil {
 		return false, err
@@ -123,7 +98,7 @@ func (s *Store) Actualizar(id int64, p Producto) (bool, error) {
 
 // Borrar elimina un producto por id. Devuelve false si no existía.
 func (s *Store) Borrar(id int64) (bool, error) {
-	res, err := s.db.Exec("DELETE FROM productos WHERE id = ?", id)
+	res, err := s.db.Exec(s.rb("DELETE FROM productos WHERE id = ?"), id)
 	if err != nil {
 		return false, err
 	}

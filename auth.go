@@ -26,18 +26,14 @@ func (s *Store) RegistrarUsuario(email, password string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	res, err := s.db.Exec("INSERT INTO usuarios (email, password_hash) VALUES (?, ?)", email, string(hash))
-	if err != nil {
-		return 0, err
-	}
-	return res.LastInsertId()
+	return s.insertID("INSERT INTO usuarios (email, password_hash) VALUES (?, ?)", email, string(hash))
 }
 
 // AutenticarUsuario comprueba email + contraseña. Devuelve el id si es correcto.
 func (s *Store) AutenticarUsuario(email, password string) (int64, bool, error) {
 	var id int64
 	var hash string
-	err := s.db.QueryRow("SELECT id, password_hash FROM usuarios WHERE email = ?", email).Scan(&id, &hash)
+	err := s.db.QueryRow(s.rb("SELECT id, password_hash FROM usuarios WHERE email = ?"), email).Scan(&id, &hash)
 	if err != nil {
 		return 0, false, nil // no existe (no revelamos detalles)
 	}

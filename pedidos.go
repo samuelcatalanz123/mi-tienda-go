@@ -34,16 +34,15 @@ func (s *Store) CrearPedido(usuarioID int64) (Pedido, error) {
 	resumen := strings.Join(partes, ", ")
 	fecha := time.Now().Format("2006-01-02 15:04")
 
-	res, err := s.db.Exec(
+	id, err := s.insertID(
 		"INSERT INTO pedidos (usuario_id, resumen, total, fecha) VALUES (?, ?, ?, ?)",
 		usuarioID, resumen, total, fecha)
 	if err != nil {
 		return Pedido{}, err
 	}
-	id, _ := res.LastInsertId()
 
 	// Vaciar el carrito.
-	if _, err := s.db.Exec("DELETE FROM carrito WHERE usuario_id = ?", usuarioID); err != nil {
+	if _, err := s.db.Exec(s.rb("DELETE FROM carrito WHERE usuario_id = ?"), usuarioID); err != nil {
 		return Pedido{}, err
 	}
 	return Pedido{ID: id, Resumen: resumen, Total: total, Fecha: fecha}, nil
@@ -52,7 +51,7 @@ func (s *Store) CrearPedido(usuarioID int64) (Pedido, error) {
 // VerPedidos devuelve los pedidos del usuario (más recientes primero).
 func (s *Store) VerPedidos(usuarioID int64) ([]Pedido, error) {
 	rows, err := s.db.Query(
-		"SELECT id, resumen, total, fecha FROM pedidos WHERE usuario_id = ? ORDER BY id DESC", usuarioID)
+		s.rb("SELECT id, resumen, total, fecha FROM pedidos WHERE usuario_id = ? ORDER BY id DESC"), usuarioID)
 	if err != nil {
 		return nil, err
 	}
