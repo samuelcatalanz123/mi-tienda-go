@@ -4,134 +4,420 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🛒 Mi Tienda</title>
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <style>
-    :root { --azul:#1a73e8; --verde:#34a853; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif; background:#f4f6fb; color:#1f2733; }
-    header { background:linear-gradient(135deg,#1a73e8,#6c4ee0); color:#fff; padding:16px; display:flex; justify-content:space-between; align-items:center; }
-    header h1 { margin:0; font-size:20px; }
-    header button { background:rgba(255,255,255,.2); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px; }
-    main { max-width:760px; margin:0 auto; padding:16px; }
-    .card { background:#fff; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
-    .card h2 { margin:0 0 12px; font-size:17px; color:var(--azul); }
-    input { width:100%; padding:11px; border:1px solid #dbe2ee; border-radius:10px; font-size:14px; margin:5px 0; }
-    button.b { background:var(--azul); color:#fff; border:none; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:700; cursor:pointer; }
-    button.v { background:var(--verde); }
-    button.g { background:#e2e8f2; color:#333; }
-    .prod { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eef1f6; padding:10px 0; }
-    .prod:last-child { border:none; }
-    .prod .n { font-weight:700; }
-    .prod .p { color:var(--verde); font-weight:800; }
-    .prod small { color:#7a8699; }
-    .fila { display:flex; gap:8px; flex-wrap:wrap; }
-    #estado { font-size:13px; }
-    .total { text-align:right; font-size:18px; font-weight:800; color:var(--azul); margin-top:8px; }
+    :root {
+      --azul:#2563eb; --azul-osc:#1e40af; --verde:#16a34a; --verde-osc:#15803d;
+      --rojo:#dc2626; --gris:#64748b; --fondo:#f1f5f9; --tinta:#0f172a;
+      --borde:#e2e8f0; --tarjeta:#ffffff; --input:#ffffff;
+      --hero:linear-gradient(135deg,#eff6ff,#faf5ff);
+      --sombra:0 1px 3px rgba(15,23,42,.08),0 8px 24px rgba(15,23,42,.06);
+    }
+    body.dark {
+      --gris:#94a3b8; --fondo:#0b1220; --tinta:#e2e8f0;
+      --borde:#1e293b; --tarjeta:#111c30; --input:#0b1424;
+      --hero:linear-gradient(135deg,#0b1424,#1a1033);
+      --sombra:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+      background:var(--fondo); color:var(--tinta); line-height:1.5;
+      transition:background .25s, color .25s;
+    }
+
+    /* Header */
+    header {
+      position:sticky; top:0; z-index:50;
+      background:linear-gradient(135deg,#2563eb,#7c3aed);
+      color:#fff; padding:13px 16px; display:flex; justify-content:space-between;
+      align-items:center; gap:10px; box-shadow:0 2px 12px rgba(37,99,235,.25);
+    }
+    header .logo { display:flex; align-items:center; gap:8px; font-size:19px; font-weight:800; }
+    header .acciones { display:flex; align-items:center; gap:8px; }
+    .icono {
+      background:rgba(255,255,255,.18); color:#fff; border:none; border-radius:11px;
+      width:40px; height:40px; cursor:pointer; font-size:17px; transition:background .15s;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .icono:hover { background:rgba(255,255,255,.32); }
+    .btn-carrito {
+      position:relative; background:rgba(255,255,255,.18); color:#fff; border:none;
+      border-radius:11px; padding:0 14px; height:40px; cursor:pointer; font-size:14px;
+      font-weight:700; transition:background .15s; display:flex; align-items:center; gap:6px;
+    }
+    .btn-carrito:hover { background:rgba(255,255,255,.32); }
+    .badge {
+      position:absolute; top:-6px; right:-6px; background:var(--rojo); color:#fff;
+      font-size:11px; font-weight:800; min-width:19px; height:19px; border-radius:10px;
+      align-items:center; justify-content:center; padding:0 5px; box-shadow:0 0 0 2px #fff3;
+      display:none;
+    }
+
+    /* Hero */
+    .hero { background:var(--hero); border-bottom:1px solid var(--borde); text-align:center; padding:24px 16px; }
+    .hero h2 { margin:0 0 4px; font-size:23px; }
+    .hero p { margin:0; color:var(--gris); font-size:14px; }
+
+    main { max-width:1000px; margin:0 auto; padding:18px 16px 40px; }
+
+    .card {
+      background:var(--tarjeta); border:1px solid var(--borde); border-radius:16px;
+      padding:18px; margin-bottom:16px; box-shadow:var(--sombra);
+    }
+    .card h3 { margin:0 0 14px; font-size:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .sub { color:var(--gris); font-weight:400; font-size:13px; }
+
+    input {
+      width:100%; padding:12px 13px; border:1px solid var(--borde); border-radius:11px;
+      font-size:14px; margin:5px 0; background:var(--input); color:var(--tinta);
+      transition:border-color .15s,box-shadow .15s;
+    }
+    input:focus { outline:none; border-color:var(--azul); box-shadow:0 0 0 3px rgba(37,99,235,.18); }
+
+    .btn {
+      border:none; border-radius:11px; padding:11px 16px; font-size:14px; font-weight:700;
+      cursor:pointer; transition:transform .08s, filter .15s; color:#fff; background:var(--azul);
+    }
+    .btn:hover { filter:brightness(1.08); }
+    .btn:active { transform:scale(.97); }
+    .btn.verde { background:var(--verde); }
+    .btn.gris { background:var(--borde); color:var(--tinta); }
+    .btn.rojo-sutil { background:#fee2e2; color:var(--rojo); }
+    body.dark .btn.rojo-sutil { background:#3a1212; }
+    .btn.full { width:100%; }
+    .fila { display:flex; gap:9px; flex-wrap:wrap; }
+
+    /* Buscador y orden */
+    .controles { display:flex; gap:9px; margin-bottom:14px; flex-wrap:wrap; }
+    .buscador { position:relative; flex:1; min-width:180px; }
+    .buscador input { margin:0; padding-left:38px; }
+    #orden {
+      padding:12px 13px; border:1px solid var(--borde); border-radius:11px; font-size:14px;
+      background:var(--input); color:var(--tinta); cursor:pointer;
+    }
+    #orden:focus { outline:none; border-color:var(--azul); }
+    .buscador::before {
+      content:"🔍"; position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      font-size:14px; opacity:.6;
+    }
+
+    /* Cuadrícula de productos */
+    .grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); }
+    .prod-card {
+      background:var(--tarjeta); border:1px solid var(--borde); border-radius:14px; overflow:hidden;
+      display:flex; flex-direction:column; transition:transform .12s, box-shadow .12s;
+    }
+    .prod-card:hover { transform:translateY(-3px); box-shadow:var(--sombra); }
+    .prod-img { width:100%; aspect-ratio:1/1; object-fit:cover; background:var(--borde); display:block; }
+    .prod-img-falta {
+      width:100%; aspect-ratio:1/1; background:var(--borde);
+      display:flex; align-items:center; justify-content:center; font-size:42px;
+    }
+    .prod-body { padding:12px 13px 14px; display:flex; flex-direction:column; gap:6px; flex:1; }
+    .prod-nombre { font-weight:700; font-size:15px; }
+    .prod-desc { font-size:12.5px; color:var(--gris); line-height:1.35; }
+    .prod-precio { color:var(--verde); font-weight:800; font-size:18px; }
+    .prod-stock {
+      display:inline-block; font-size:11px; font-weight:700; color:var(--gris);
+      background:var(--fondo); border-radius:20px; padding:2px 9px; width:fit-content;
+    }
+    .prod-stock.poco { color:#b45309; background:#fef3c7; }
+    .prod-stock.agotado { color:var(--rojo); background:#fee2e2; }
+    body.dark .prod-stock.poco { background:#3a2c0a; }
+    body.dark .prod-stock.agotado { background:#3a1212; }
+    .prod-card .btn { margin-top:auto; }
+    .vacio { text-align:center; color:var(--gris); padding:30px 10px; }
+
+    /* Carrito deslizante */
+    .overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:90;
+      opacity:0; visibility:hidden; transition:opacity .25s;
+    }
+    .overlay.abierto { opacity:1; visibility:visible; }
+    .drawer {
+      position:fixed; top:0; right:0; height:100%; width:380px; max-width:90vw; z-index:95;
+      background:var(--tarjeta); box-shadow:-8px 0 30px rgba(0,0,0,.2);
+      transform:translateX(100%); transition:transform .28s ease; display:flex; flex-direction:column;
+    }
+    .drawer.abierto { transform:translateX(0); }
+    .drawer-head {
+      padding:18px; border-bottom:1px solid var(--borde); display:flex;
+      justify-content:space-between; align-items:center;
+    }
+    .drawer-head h3 { margin:0; font-size:17px; }
+    .cerrar { background:none; border:none; font-size:22px; cursor:pointer; color:var(--gris); line-height:1; }
+    .drawer-body { padding:18px; overflow-y:auto; flex:1; }
+    .drawer-foot { padding:18px; border-top:1px solid var(--borde); }
+
+    .item { display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--borde); }
+    .item:last-of-type { border-bottom:none; }
+    .item .info { flex:1; }
+    .item .info .n { font-weight:700; font-size:14px; }
+    .item .info small { color:var(--gris); }
+    .item .sub-precio { color:var(--verde); font-weight:800; white-space:nowrap; }
+    .cantidad { display:flex; align-items:center; gap:10px; margin-top:6px; }
+    .cant-btn {
+      width:28px; height:28px; border:1px solid var(--borde); background:var(--fondo);
+      color:var(--tinta); border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; line-height:1;
+    }
+    .cant-btn:hover { border-color:var(--azul); color:var(--azul); }
+    .cant-num { font-weight:800; min-width:20px; text-align:center; }
+
+    /* Lista de pedidos */
+    .pedido {
+      border:1px solid var(--borde); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+      background:var(--fondo);
+    }
+    .pedido .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+    .pedido .pid { font-weight:800; }
+    .pedido .ptotal { color:var(--verde); font-weight:800; }
+    .pedido .pres { font-size:13px; color:var(--gris); }
+    .pedido .pfecha { font-size:12px; color:var(--gris); margin-top:4px; }
+    .btn-wa {
+      margin-top:9px; width:100%; border:none; border-radius:10px; padding:9px;
+      background:#25d366; color:#fff; font-weight:700; font-size:13px; cursor:pointer;
+      transition:filter .15s;
+    }
+    .btn-wa:hover { filter:brightness(1.07); }
+    .total { font-size:21px; font-weight:800; color:var(--tinta); margin-bottom:12px; display:flex; justify-content:space-between; }
+
+    /* Avisos */
+    #toasts {
+      position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+      display:flex; flex-direction:column; gap:8px; z-index:120; width:max-content; max-width:90vw;
+    }
+    .toast {
+      background:var(--tinta); color:var(--fondo); padding:12px 18px; border-radius:12px;
+      font-size:14px; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.25);
+      animation:subir .25s ease; text-align:center;
+    }
+    .toast.ok { background:var(--verde-osc); color:#fff; }
+    .toast.error { background:var(--rojo); color:#fff; }
+    @keyframes subir { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+    footer { text-align:center; padding:26px 16px 34px; color:var(--gris); font-size:13px; }
+    footer b { color:var(--tinta); }
   </style>
 </head>
 <body>
   <header>
-    <h1>🛒 Mi Tienda</h1>
-    <button onclick="verCarrito()">🛍️ Mi carrito</button>
+    <div class="logo">🛒 Mi Tienda</div>
+    <div class="acciones">
+      <button class="btn-carrito" id="btnInstalar" onclick="instalar()" style="display:none;">⬇️ <span>Instalar</span></button>
+      <button class="icono" id="btnTema" onclick="cambiarTema()" title="Modo claro/oscuro">🌙</button>
+      <button class="btn-carrito" onclick="abrirCarrito()">
+        🛍️ <span>Carrito</span> <span class="badge" id="badge">0</span>
+      </button>
+    </div>
   </header>
+
+  <div class="hero">
+    <h2>Bienvenido a tu tienda 🎉</h2>
+    <p>Productos de calidad, compra fácil y rápida.</p>
+  </div>
 
   <main>
     <!-- Cuenta -->
     <div class="card">
-      <h2>👤 Mi cuenta <span id="estado" style="color:#7a8699;font-weight:400;"></span></h2>
+      <h3>👤 Mi cuenta <span class="sub" id="estado"></span></h3>
       <div id="formCuenta">
-        <input id="email" type="email" placeholder="Correo" />
-        <input id="pass" type="password" placeholder="Contraseña" />
+        <input id="email" type="email" placeholder="Tu correo" />
+        <input id="pass" type="password" placeholder="Tu contraseña" />
         <div class="fila">
-          <button class="b" onclick="entrar()">Entrar</button>
-          <button class="b g" onclick="registrar()">Crear cuenta</button>
+          <button class="btn" onclick="entrar()">Entrar</button>
+          <button class="btn gris" onclick="registrar()">Crear cuenta</button>
         </div>
       </div>
-      <button class="b g" id="btnSalir" style="display:none;" onclick="salir()">Cerrar sesión</button>
+      <div class="fila" id="accionesCuenta" style="display:none;">
+        <button class="btn gris" onclick="verPedidos()">📋 Mis pedidos</button>
+        <button class="btn gris" id="btnSalir" onclick="salir()">Cerrar sesión</button>
+      </div>
     </div>
 
-    <!-- Productos -->
-    <div class="card">
-      <h2>🏷️ Productos</h2>
-      <div id="productos">Cargando…</div>
+    <!-- Mis pedidos (historial) -->
+    <div class="card" id="cardPedidos" style="display:none;">
+      <h3>📋 Mis pedidos</h3>
+      <div id="pedidos"></div>
     </div>
 
     <!-- Agregar producto (solo admin/logueado) -->
     <div class="card" id="cardAdmin" style="display:none;">
-      <h2>➕ Agregar un producto</h2>
-      <input id="pn" type="text" placeholder="Nombre" />
+      <h3>➕ Agregar un producto <span class="sub">(solo tú, el dueño)</span></h3>
+      <input id="pn" type="text" placeholder="Nombre del producto" />
+      <input id="pd" type="text" placeholder="Descripción (opcional)" />
       <input id="pi" type="text" placeholder="URL de la imagen (opcional)" />
       <div class="fila">
-        <input id="pp" type="number" placeholder="Precio" style="flex:1;" />
+        <input id="pp" type="number" placeholder="Precio (Q)" style="flex:1;" />
         <input id="ps" type="number" placeholder="Stock" style="flex:1;" />
       </div>
-      <button class="b v" onclick="agregarProducto()">Guardar producto</button>
+      <button class="btn verde full" onclick="agregarProducto()">Guardar producto</button>
     </div>
 
-    <!-- Carrito -->
-    <div class="card" id="cardCarrito" style="display:none;">
-      <h2>🛍️ Mi carrito</h2>
-      <div id="carrito"></div>
-      <div class="total" id="total"></div>
+    <!-- Productos -->
+    <div class="card">
+      <h3>🏷️ Nuestros productos <span class="sub" id="conteo"></span></h3>
+      <div class="controles">
+        <div class="buscador">
+          <input id="busqueda" type="text" placeholder="Buscar producto…" oninput="render()" />
+        </div>
+        <select id="orden" onchange="render()">
+          <option value="recientes">Más recientes</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="nombre">Nombre (A–Z)</option>
+        </select>
+      </div>
+      <div id="productos"><p class="vacio">Cargando…</p></div>
     </div>
   </main>
 
+  <footer>
+    Hecho con 💙 por <b>Samuel Catalán</b> · Mi Tienda 🛒
+  </footer>
+
+  <!-- Carrito deslizante -->
+  <div class="overlay" id="overlay" onclick="cerrarCarrito()"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <h3>🛍️ Mi carrito</h3>
+      <button class="cerrar" onclick="cerrarCarrito()">✕</button>
+    </div>
+    <div class="drawer-body" id="carrito"></div>
+    <div class="drawer-foot" id="pie" style="display:none;"></div>
+  </aside>
+
+  <div id="toasts"></div>
+
   <script>
-    const API = ""; // mismo servidor
+    const API = "";
     let token = localStorage.getItem("token") || "";
+    let productosCargados = [];
+
+    // ----- Tema claro/oscuro -----
+    function aplicarTema(t) {
+      document.body.classList.toggle("dark", t === "dark");
+      document.getElementById("btnTema").textContent = t === "dark" ? "☀️" : "🌙";
+    }
+    function cambiarTema() {
+      const nuevo = document.body.classList.contains("dark") ? "claro" : "dark";
+      localStorage.setItem("tema", nuevo);
+      aplicarTema(nuevo);
+    }
+    aplicarTema(localStorage.getItem("tema") || "claro");
+
+    // ----- Avisos -----
+    function aviso(texto, tipo) {
+      const cont = document.getElementById("toasts");
+      const t = document.createElement("div");
+      t.className = "toast" + (tipo ? " " + tipo : "");
+      t.textContent = texto;
+      cont.appendChild(t);
+      setTimeout(() => t.remove(), 2800);
+    }
 
     function pintarEstado() {
       const e = document.getElementById("estado");
       if (token) {
         e.textContent = "· sesión iniciada ✅";
         document.getElementById("formCuenta").style.display = "none";
-        document.getElementById("btnSalir").style.display = "inline-block";
+        document.getElementById("accionesCuenta").style.display = "flex";
         document.getElementById("cardAdmin").style.display = "block";
       } else {
         e.textContent = "· sin sesión";
         document.getElementById("formCuenta").style.display = "block";
-        document.getElementById("btnSalir").style.display = "none";
+        document.getElementById("accionesCuenta").style.display = "none";
         document.getElementById("cardAdmin").style.display = "none";
+        document.getElementById("cardPedidos").style.display = "none";
       }
     }
 
+    // ----- Productos -----
     async function cargarProductos() {
-      const r = await fetch(API + "/productos");
-      const ps = await r.json();
+      try {
+        const r = await fetch(API + "/productos");
+        productosCargados = await r.json();
+      } catch (e) { productosCargados = []; }
+      render();
+    }
+
+    function render() {
       const cont = document.getElementById("productos");
-      if (!ps.length) { cont.innerHTML = "<small>No hay productos todavía. ¡Agrega uno abajo!</small>"; return; }
-      cont.innerHTML = ps.map((p) =>
-        `<div class="prod">
-          <div style="display:flex;align-items:center;gap:10px;">
-            ${p.imagen ? `<img src="${p.imagen}" style="width:46px;height:46px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : ""}
-            <div><div class="n">${p.nombre}</div><small>Stock: ${p.stock}</small></div>
+      const q = (document.getElementById("busqueda").value || "").toLowerCase().trim();
+      const orden = document.getElementById("orden").value;
+      const lista = productosCargados.filter((p) => p.nombre.toLowerCase().includes(q));
+      if (orden === "precio-asc") lista.sort((a, b) => a.precio - b.precio);
+      else if (orden === "precio-desc") lista.sort((a, b) => b.precio - a.precio);
+      else if (orden === "nombre") lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      document.getElementById("conteo").textContent =
+        productosCargados.length ? "· " + productosCargados.length + " en total" : "";
+
+      if (!productosCargados.length) {
+        cont.innerHTML = '<p class="vacio">No hay productos todavía. 🛍️<br>' +
+          (token ? "¡Agrega el primero arriba!" : "Inicia sesión para agregar productos.") + "</p>";
+        return;
+      }
+      if (!lista.length) { cont.innerHTML = '<p class="vacio">No se encontró «' + q + '». 🔍</p>'; return; }
+
+      cont.innerHTML = '<div class="grid">' + lista.map((p) => {
+        const stockTxt = p.stock > 0 ? "Stock: " + p.stock : "Agotado";
+        const stockCls = p.stock <= 0 ? "agotado" : (p.stock <= 3 ? "poco" : "");
+        const img = p.imagen
+          ? `<img class="prod-img" src="${p.imagen}" alt="${p.nombre}" onerror="this.outerHTML='<div class=\\'prod-img-falta\\'>📦</div>'">`
+          : `<div class="prod-img-falta">📦</div>`;
+        const desc = p.descripcion ? `<div class="prod-desc">${p.descripcion}</div>` : "";
+        const btnAgregar = p.stock <= 0
+          ? `<button class="btn full" disabled style="opacity:.45;cursor:not-allowed;">Agotado</button>`
+          : `<button class="btn full" onclick="agregarCarrito(${p.id})">🛒 Agregar</button>`;
+        const btnBorrar = token
+          ? `<button class="btn rojo-sutil full" style="margin-top:6px;" onclick="borrarProducto(${p.id})">🗑️ Eliminar</button>`
+          : "";
+        return `<div class="prod-card">
+          ${img}
+          <div class="prod-body">
+            <div class="prod-nombre">${p.nombre}</div>
+            ${desc}
+            <span class="prod-stock ${stockCls}">${stockTxt}</span>
+            <div class="prod-precio">Q${p.precio}</div>
+            ${btnAgregar}
+            ${btnBorrar}
           </div>
-          <div style="text-align:right;">
-            <div class="p">Q${p.precio}</div>
-            <button class="b" style="padding:6px 10px;font-size:13px;margin-top:4px;" onclick="agregarCarrito(${p.id})">🛒 Agregar</button>
-          </div>
-        </div>`).join("");
+        </div>`;
+      }).join("") + "</div>";
     }
 
     async function agregarProducto() {
-      if (!token) { alert("Inicia sesión para agregar productos."); return; }
+      if (!token) { aviso("Inicia sesión para agregar productos.", "error"); return; }
       const nombre = document.getElementById("pn").value.trim();
+      const descripcion = document.getElementById("pd").value.trim();
       const imagen = document.getElementById("pi").value.trim();
       const precio = parseFloat(document.getElementById("pp").value) || 0;
       const stock = parseInt(document.getElementById("ps").value) || 0;
-      if (!nombre) { alert("Escribe el nombre del producto."); return; }
+      if (!nombre) { aviso("Escribe el nombre del producto.", "error"); return; }
       const r = await fetch(API + "/productos", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ nombre, precio, stock, imagen }),
+        body: JSON.stringify({ nombre, descripcion, precio, stock, imagen }),
       });
-      if (!r.ok) { alert("⚠️ No se pudo (¿iniciaste sesión?)."); return; }
-      document.getElementById("pn").value = "";
-      document.getElementById("pi").value = "";
-      document.getElementById("pp").value = "";
-      document.getElementById("ps").value = "";
+      if (!r.ok) { aviso("No se pudo (¿iniciaste sesión?).", "error"); return; }
+      ["pn","pd","pi","pp","ps"].forEach((id) => document.getElementById(id).value = "");
+      aviso("¡Producto agregado! 🎉", "ok");
       cargarProductos();
     }
 
+    async function borrarProducto(id) {
+      if (!confirm("¿Seguro que quieres eliminar este producto de la tienda?")) return;
+      const r = await fetch(API + "/productos/" + id, {
+        method: "DELETE", headers: { "Authorization": "Bearer " + token },
+      });
+      if (r.ok) { aviso("Producto eliminado. 🗑️", "ok"); cargarProductos(); }
+      else aviso("No se pudo eliminar.", "error");
+    }
+
+    // ----- Cuenta -----
     async function registrar() { cuenta("/registro"); }
     async function entrar() { cuenta("/login"); }
     async function cuenta(ruta) {
@@ -143,48 +429,137 @@
       });
       const d = await r.json();
       if (r.ok && d.token) {
-        token = d.token; localStorage.setItem("token", token); pintarEstado();
-        alert("¡Bienvenido! 🎉");
-      } else {
-        alert("⚠️ " + (d.error || "No se pudo."));
-      }
+        token = d.token; localStorage.setItem("token", token);
+        pintarEstado(); cargarProductos(); refrescarBadge();
+        aviso("¡Bienvenido! 🎉", "ok");
+      } else { aviso(d.error || "No se pudo.", "error"); }
     }
-    function salir() { token = ""; localStorage.removeItem("token"); pintarEstado(); }
+    function salir() {
+      token = ""; localStorage.removeItem("token");
+      pintarEstado(); cargarProductos(); cerrarCarrito(); actualizarBadge(0);
+      aviso("Sesión cerrada. 👋");
+    }
+
+    // ----- Carrito -----
+    function actualizarBadge(n) {
+      const b = document.getElementById("badge");
+      if (n > 0) { b.textContent = n; b.style.display = "flex"; }
+      else { b.style.display = "none"; }
+    }
+    async function refrescarBadge() {
+      if (!token) { actualizarBadge(0); return; }
+      try {
+        const r = await fetch(API + "/carrito", { headers: { "Authorization": "Bearer " + token } });
+        const d = await r.json();
+        actualizarBadge((d.items || []).reduce((s, it) => s + it.cantidad, 0));
+      } catch (e) {}
+    }
 
     async function agregarCarrito(id) {
-      if (!token) { alert("Primero inicia sesión o crea una cuenta. 🙂"); return; }
+      if (!token) { aviso("Inicia sesión o crea una cuenta primero. 🙂", "error"); return; }
       const r = await fetch(API + "/carrito", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
         body: JSON.stringify({ producto_id: id, cantidad: 1 }),
       });
-      if (r.ok) alert("¡Agregado al carrito! 🛒");
-      else alert("⚠️ No se pudo agregar.");
+      if (r.ok) {
+        refrescarBadge();
+        const drawerAbierto = document.getElementById("drawer").classList.contains("abierto");
+        if (drawerAbierto) verCarrito();
+        else aviso("¡Agregado al carrito! 🛒", "ok");
+      } else aviso("No se pudo agregar.", "error");
+    }
+
+    async function restar(id) {
+      await fetch(API + "/carrito/" + id + "/restar", {
+        method: "POST", headers: { "Authorization": "Bearer " + token },
+      });
+      verCarrito();
+    }
+
+    function abrirCarrito() {
+      if (!token) { aviso("Inicia sesión para ver tu carrito. 🙂", "error"); return; }
+      document.getElementById("overlay").classList.add("abierto");
+      document.getElementById("drawer").classList.add("abierto");
+      verCarrito();
+    }
+    function cerrarCarrito() {
+      document.getElementById("overlay").classList.remove("abierto");
+      document.getElementById("drawer").classList.remove("abierto");
     }
 
     async function verCarrito() {
-      if (!token) { alert("Inicia sesión para ver tu carrito. 🙂"); return; }
       const r = await fetch(API + "/carrito", { headers: { "Authorization": "Bearer " + token } });
       const d = await r.json();
-      document.getElementById("cardCarrito").style.display = "block";
       const cont = document.getElementById("carrito");
-      if (!d.items || !d.items.length) { cont.innerHTML = "<small>Tu carrito está vacío.</small>"; document.getElementById("total").textContent = ""; return; }
+      const pie = document.getElementById("pie");
+      if (!d.items || !d.items.length) {
+        cont.innerHTML = '<p class="vacio">Tu carrito está vacío. 🛒</p>';
+        pie.style.display = "none";
+        actualizarBadge(0);
+        return;
+      }
       cont.innerHTML = d.items.map((it) =>
-        `<div class="prod">
-          <div><div class="n">${it.nombre}</div><small>${it.cantidad} × Q${it.precio}</small></div>
+        `<div class="item">
+          <div class="info">
+            <div class="n">${it.nombre}</div>
+            <small>Q${it.precio} c/u</small>
+            <div class="cantidad">
+              <button class="cant-btn" onclick="restar(${it.id})">−</button>
+              <span class="cant-num">${it.cantidad}</span>
+              <button class="cant-btn" onclick="agregarCarrito(${it.producto_id})">+</button>
+            </div>
+          </div>
           <div style="text-align:right;">
-            <div class="p">Q${it.subtotal}</div>
-            <button class="b g" style="padding:5px 9px;font-size:12px;margin-top:4px;" onclick="quitar(${it.id})">🗑️ Quitar</button>
+            <div class="sub-precio">Q${it.subtotal}</div>
+            <button class="btn rojo-sutil" style="padding:5px 9px;margin-top:6px;font-size:12px;" onclick="quitar(${it.id})">🗑️</button>
           </div>
         </div>`).join("");
-      document.getElementById("total").textContent = "Total: Q" + d.total;
-      cont.innerHTML += `<button class="b v" style="width:100%;margin-top:10px;" onclick="comprar()">🛍️ Finalizar compra</button>`;
-      document.getElementById("cardCarrito").scrollIntoView({ behavior: "smooth" });
+      pie.style.display = "block";
+      pie.innerHTML =
+        '<div class="total"><span>Total:</span><span>Q' + d.total + '</span></div>' +
+        '<button class="btn verde full" onclick="comprar()">🛍️ Finalizar compra</button>';
+      actualizarBadge(d.items.reduce((s, it) => s + it.cantidad, 0));
     }
 
     async function quitar(id) {
       await fetch(API + "/carrito/" + id, { method: "DELETE", headers: { "Authorization": "Bearer " + token } });
       verCarrito();
+    }
+
+    // Abre WhatsApp con el pedido listo para enviar (el cliente elige a quién).
+    function compartirWhatsApp(btn, id, total) {
+      const resumen = decodeURIComponent(btn.dataset.res);
+      const texto = `🛒 *Mi Tienda — Pedido #${id}*\n\n${resumen}\n\n*Total: Q${total}*\n\n¡Quiero hacer este pedido! 😊`;
+      window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
+    }
+
+    // ----- Mis pedidos -----
+    async function verPedidos() {
+      const card = document.getElementById("cardPedidos");
+      // si ya está abierto, lo cerramos (toggle)
+      if (card.style.display === "block") { card.style.display = "none"; return; }
+      const cont = document.getElementById("pedidos");
+      cont.innerHTML = '<p class="vacio">Cargando…</p>';
+      card.style.display = "block";
+      card.scrollIntoView({ behavior: "smooth" });
+      try {
+        const r = await fetch(API + "/pedidos", { headers: { "Authorization": "Bearer " + token } });
+        const ped = await r.json();
+        if (!ped.length) { cont.innerHTML = '<p class="vacio">Todavía no has hecho ninguna compra. 🛍️</p>'; return; }
+        cont.innerHTML = ped.map((p) =>
+          `<div class="pedido">
+            <div class="top">
+              <span class="pid">Pedido #${p.id}</span>
+              <span class="ptotal">Q${p.total}</span>
+            </div>
+            <div class="pres">${p.resumen}</div>
+            <div class="pfecha">📅 ${p.fecha}</div>
+            <button class="btn-wa" data-res="${encodeURIComponent(p.resumen)}" onclick="compartirWhatsApp(this, ${p.id}, '${p.total}')">📲 Enviar por WhatsApp</button>
+          </div>`).join("");
+      } catch (e) {
+        cont.innerHTML = '<p class="vacio">No se pudieron cargar los pedidos. 😕</p>';
+      }
     }
 
     async function comprar() {
@@ -193,15 +568,42 @@
       });
       const d = await r.json();
       if (r.ok) {
-        alert("¡Pedido realizado! 🎉\nTotal: Q" + d.pedido.total + "\n" + d.pedido.resumen);
-        verCarrito();
-      } else {
-        alert("⚠️ " + (d.error || "No se pudo comprar."));
+        aviso("¡Pedido realizado! 🎉 Total: Q" + d.pedido.total, "ok");
+        actualizarBadge(0); verCarrito();
+        setTimeout(cerrarCarrito, 1200);
+      } else { aviso(d.error || "No se pudo comprar.", "error"); }
+    }
+
+    // ----- App instalable (PWA) -----
+    let promptInstalar = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      promptInstalar = e;
+      document.getElementById("btnInstalar").style.display = "flex";
+    });
+    async function instalar() {
+      if (!promptInstalar) {
+        aviso("En iPhone: botón Compartir → 'Añadir a inicio'. 📱");
+        return;
       }
+      promptInstalar.prompt();
+      await promptInstalar.userChoice;
+      promptInstalar = null;
+      document.getElementById("btnInstalar").style.display = "none";
+    }
+    window.addEventListener("appinstalled", () => {
+      document.getElementById("btnInstalar").style.display = "none";
+      aviso("¡App instalada! 🎉", "ok");
+    });
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () =>
+        navigator.serviceWorker.register("/sw.js").catch(() => {})
+      );
     }
 
     pintarEstado();
     cargarProductos();
+    refrescarBadge();
   </script>
 </body>
 </html>

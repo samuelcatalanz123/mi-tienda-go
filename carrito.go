@@ -1,5 +1,7 @@
 package main
 
+import "database/sql"
+
 // ItemCarrito es una línea del carrito (un producto con su cantidad).
 type ItemCarrito struct {
 	ID         int64   `json:"id"`
@@ -10,14 +12,44 @@ type ItemCarrito struct {
 	Subtotal   float64 `json:"subtotal"`
 }
 
-// AgregarAlCarrito mete un producto al carrito del usuario.
+// AgregarAlCarrito mete un producto al carrito del usuario. Si ese producto ya
+// estaba en el carrito, le suma la cantidad (no crea una línea repetida).
 func (s *Store) AgregarAlCarrito(usuarioID, productoID int64, cantidad int) error {
 	if cantidad < 1 {
 		cantidad = 1
 	}
-	_, err := s.db.Exec(
+	var id int64
+	err := s.db.QueryRow(
+		s.rb("SELECT id FROM carrito WHERE usuario_id = ? AND producto_id = ?"),
+		usuarioID, productoID).Scan(&id)
+	if err == nil {
+		// ya estaba: sumamos la cantidad
+		_, err = s.db.Exec(s.rb("UPDATE carrito SET cantidad = cantidad + ? WHERE id = ?"), cantidad, id)
+		return err
+	}
+	if err != sql.ErrNoRows {
+		return err
+	}
+	_, err = s.db.Exec(
 		s.rb("INSERT INTO carrito (usuario_id, producto_id, cantidad) VALUES (?, ?, ?)"),
 		usuarioID, productoID, cantidad)
+	return err
+}
+
+// RestarDelCarrito baja en 1 la cantidad de una línea. Si llega a 0, la quita.
+func (s *Store) RestarDelCarrito(usuarioID, itemID int64) error {
+	var cant int
+	err := s.db.QueryRow(
+		s.rb("SELECT cantidad FROM carrito WHERE id = ? AND usuario_id = ?"),
+		itemID, usuarioID).Scan(&cant)
+	if err != nil {
+		return err
+	}
+	if cant <= 1 {
+		_, err = s.db.Exec(s.rb("DELETE FROM carrito WHERE id = ? AND usuario_id = ?"), itemID, usuarioID)
+		return err
+	}
+	_, err = s.db.Exec(s.rb("UPDATE carrito SET cantidad = cantidad - 1 WHERE id = ? AND usuario_id = ?"), itemID, usuarioID)
 	return err
 }
 

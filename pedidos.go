@@ -30,6 +30,10 @@ func (s *Store) CrearPedido(usuarioID int64) (Pedido, error) {
 	for _, it := range items {
 		partes = append(partes, fmt.Sprintf("%s x%d", it.Nombre, it.Cantidad))
 		total += it.Subtotal
+		// bajar el stock del producto comprado (nunca por debajo de 0)
+		s.db.Exec(
+			s.rb("UPDATE productos SET stock = CASE WHEN stock < ? THEN 0 ELSE stock - ? END WHERE id = ?"),
+			it.Cantidad, it.Cantidad, it.ProductoID)
 	}
 	resumen := strings.Join(partes, ", ")
 	fecha := time.Now().Format("2006-01-02 15:04")

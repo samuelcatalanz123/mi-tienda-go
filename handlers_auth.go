@@ -107,6 +107,22 @@ func verPedidosHandler(s *Store) func(http.ResponseWriter, *http.Request, int64)
 	}
 }
 
+// POST /carrito/{id}/restar → baja en 1 la cantidad (requiere login).
+func restarCarritoHandler(s *Store) func(http.ResponseWriter, *http.Request, int64) {
+	return func(w http.ResponseWriter, r *http.Request, userID int64) {
+		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil {
+			escribirJSON(w, 400, map[string]string{"error": "id inválido"})
+			return
+		}
+		if err := s.RestarDelCarrito(userID, id); err != nil {
+			escribirJSON(w, 500, map[string]string{"error": "error del servidor"})
+			return
+		}
+		escribirJSON(w, 200, map[string]string{"mensaje": "actualizado"})
+	}
+}
+
 // DELETE /carrito/{id} → quita una línea del carrito (requiere login).
 func quitarCarritoHandler(s *Store) func(http.ResponseWriter, *http.Request, int64) {
 	return func(w http.ResponseWriter, r *http.Request, userID int64) {

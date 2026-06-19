@@ -17,6 +17,11 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", homeHandler) // la página web de la tienda
 	mux.HandleFunc("GET /health", healthHandler)
+	// Archivos para que la tienda sea una app instalable (PWA).
+	mux.HandleFunc("GET /manifest.json", manifestHandler)
+	mux.HandleFunc("GET /sw.js", swHandler)
+	mux.HandleFunc("GET /icon-192.png", iconoHandler(icon192))
+	mux.HandleFunc("GET /icon-512.png", iconoHandler(icon512))
 	mux.HandleFunc("GET /productos", listarHandler(store))
 	mux.HandleFunc("GET /productos/{id}", obtenerHandler(store))
 	// Agregar/editar/borrar productos requiere haber iniciado sesión (admin).
@@ -29,6 +34,7 @@ func main() {
 	mux.HandleFunc("POST /login", loginHandler(store))
 	mux.HandleFunc("POST /carrito", protegido(agregarCarritoHandler(store)))
 	mux.HandleFunc("GET /carrito", protegido(verCarritoHandler(store)))
+	mux.HandleFunc("POST /carrito/{id}/restar", protegido(restarCarritoHandler(store)))
 	mux.HandleFunc("DELETE /carrito/{id}", protegido(quitarCarritoHandler(store)))
 
 	// Etapa 4: pedidos (finalizar compra)
