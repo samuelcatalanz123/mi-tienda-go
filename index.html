@@ -199,6 +199,16 @@
     .toast.error { background:var(--rojo); color:#fff; }
     @keyframes subir { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
 
+    /* Panel de dueño */
+    .stats { display:grid; gap:11px; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+    .stat {
+      background:var(--fondo); border:1px solid var(--borde); border-radius:12px; padding:13px 14px;
+    }
+    .stat .et { font-size:12px; color:var(--gris); font-weight:600; }
+    .stat .num { font-size:22px; font-weight:800; margin-top:3px; }
+    .stat.azul .num { color:var(--azul); }
+    .stat.verde .num { color:var(--verde); }
+
     footer { text-align:center; padding:26px 16px 34px; color:var(--gris); font-size:13px; }
     footer b { color:var(--tinta); }
   </style>
@@ -244,9 +254,15 @@
       <div id="pedidos"></div>
     </div>
 
+    <!-- Panel de dueño (solo admin/logueado) -->
+    <div class="card" id="cardStats" style="display:none;">
+      <h3>📊 Panel de tu tienda</h3>
+      <div class="stats" id="stats"></div>
+    </div>
+
     <!-- Agregar producto (solo admin/logueado) -->
     <div class="card" id="cardAdmin" style="display:none;">
-      <h3>➕ Agregar un producto <span class="sub">(solo tú, el dueño)</span></h3>
+      <h3 id="tituloAdmin">➕ Agregar un producto <span class="sub">(solo tú, el dueño)</span></h3>
       <input id="pn" type="text" placeholder="Nombre del producto" />
       <input id="pd" type="text" placeholder="Descripción (opcional)" />
       <input id="pi" type="text" placeholder="URL de la imagen (opcional)" />
@@ -254,7 +270,8 @@
         <input id="pp" type="number" placeholder="Precio (Q)" style="flex:1;" />
         <input id="ps" type="number" placeholder="Stock" style="flex:1;" />
       </div>
-      <button class="btn verde full" onclick="agregarProducto()">Guardar producto</button>
+      <button class="btn verde full" id="btnGuardarProd" onclick="guardarProducto()">Guardar producto</button>
+      <button class="btn gris full" id="btnCancelarEdit" style="display:none;margin-top:6px;" onclick="cancelarEdicion()">Cancelar edición</button>
     </div>
 
     <!-- Productos -->
@@ -326,11 +343,13 @@
         document.getElementById("formCuenta").style.display = "none";
         document.getElementById("accionesCuenta").style.display = "flex";
         document.getElementById("cardAdmin").style.display = "block";
+        document.getElementById("cardStats").style.display = "block";
       } else {
         e.textContent = "· sin sesión";
         document.getElementById("formCuenta").style.display = "block";
         document.getElementById("accionesCuenta").style.display = "none";
         document.getElementById("cardAdmin").style.display = "none";
+        document.getElementById("cardStats").style.display = "none";
         document.getElementById("cardPedidos").style.display = "none";
       }
     }
@@ -372,8 +391,11 @@
         const btnAgregar = p.stock <= 0
           ? `<button class="btn full" disabled style="opacity:.45;cursor:not-allowed;">Agotado</button>`
           : `<button class="btn full" onclick="agregarCarrito(${p.id})">🛒 Agregar</button>`;
-        const btnBorrar = token
-          ? `<button class="btn rojo-sutil full" style="margin-top:6px;" onclick="borrarProducto(${p.id})">🗑️ Eliminar</button>`
+        const btnsAdmin = token
+          ? `<div class="fila" style="margin-top:6px;">
+               <button class="btn gris" style="flex:1;" onclick="editarProducto(${p.id})">✏️ Editar</button>
+               <button class="btn rojo-sutil" style="flex:1;" onclick="borrarProducto(${p.id})">🗑️ Borrar</button>
+             </div>`
           : "";
         return `<div class="prod-card">
           ${img}
@@ -383,13 +405,15 @@
             <span class="prod-stock ${stockCls}">${stockTxt}</span>
             <div class="prod-precio">Q${p.precio}</div>
             ${btnAgregar}
-            ${btnBorrar}
+            ${btnsAdmin}
           </div>
         </div>`;
       }).join("") + "</div>";
     }
 
-    async function agregarProducto() {
+    let editandoId = null;
+
+    async function guardarProducto() {
       if (!token) { aviso("Inicia sesión para agregar productos.", "error"); return; }
       const nombre = document.getElementById("pn").value.trim();
       const descripcion = document.getElementById("pd").value.trim();
@@ -397,15 +421,62 @@
       const precio = parseFloat(document.getElementById("pp").value) || 0;
       const stock = parseInt(document.getElementById("ps").value) || 0;
       if (!nombre) { aviso("Escribe el nombre del producto.", "error"); return; }
-      const r = await fetch(API + "/productos", {
-        method: "POST",
+      const editando = editandoId !== null;
+      const r = await fetch(API + "/productos" + (editando ? "/" + editandoId : ""), {
+        method: editando ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
         body: JSON.stringify({ nombre, descripcion, precio, stock, imagen }),
       });
-      if (!r.ok) { aviso("No se pudo (¿iniciaste sesión?).", "error"); return; }
+      if (!r.ok) { aviso("No se pudo guardar.", "error"); return; }
+      aviso(editando ? "¡Producto actualizado! ✏️" : "¡Producto agregado! 🎉", "ok");
+      cancelarEdicion();
+      cargarProductos(); cargarStats();
+    }
+
+    function editarProducto(id) {
+      const p = productosCargados.find((x) => x.id === id);
+      if (!p) return;
+      editandoId = id;
+      document.getElementById("pn").value = p.nombre;
+      document.getElementById("pd").value = p.descripcion || "";
+      document.getElementById("pi").value = p.imagen || "";
+      document.getElementById("pp").value = p.precio;
+      document.getElementById("ps").value = p.stock;
+      document.getElementById("tituloAdmin").innerHTML = '✏️ Editar producto <span class="sub">#' + id + '</span>';
+      document.getElementById("btnGuardarProd").textContent = "Guardar cambios";
+      document.getElementById("btnCancelarEdit").style.display = "block";
+      document.getElementById("cardAdmin").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function cancelarEdicion() {
+      editandoId = null;
       ["pn","pd","pi","pp","ps"].forEach((id) => document.getElementById(id).value = "");
-      aviso("¡Producto agregado! 🎉", "ok");
-      cargarProductos();
+      document.getElementById("tituloAdmin").innerHTML = '➕ Agregar un producto <span class="sub">(solo tú, el dueño)</span>';
+      document.getElementById("btnGuardarProd").textContent = "Guardar producto";
+      document.getElementById("btnCancelarEdit").style.display = "none";
+    }
+
+    // ----- Panel de dueño -----
+    async function cargarStats() {
+      if (!token) return;
+      try {
+        const [rp, rpe] = await Promise.all([
+          fetch(API + "/productos"),
+          fetch(API + "/pedidos", { headers: { "Authorization": "Bearer " + token } }),
+        ]);
+        const prods = await rp.json();
+        const peds = await rpe.json();
+        const unidades = prods.reduce((s, p) => s + p.stock, 0);
+        const valor = prods.reduce((s, p) => s + p.precio * p.stock, 0);
+        const vendido = peds.reduce((s, p) => s + p.total, 0);
+        const tile = (et, num, cls) => `<div class="stat ${cls}"><div class="et">${et}</div><div class="num">${num}</div></div>`;
+        document.getElementById("stats").innerHTML =
+          tile("🏷️ Productos", prods.length, "azul") +
+          tile("📦 Unidades en stock", unidades, "") +
+          tile("💰 Valor inventario", "Q" + valor, "azul") +
+          tile("🧾 Pedidos", peds.length, "verde") +
+          tile("💵 Total vendido", "Q" + vendido, "verde");
+      } catch (e) {}
     }
 
     async function borrarProducto(id) {
@@ -413,7 +484,7 @@
       const r = await fetch(API + "/productos/" + id, {
         method: "DELETE", headers: { "Authorization": "Bearer " + token },
       });
-      if (r.ok) { aviso("Producto eliminado. 🗑️", "ok"); cargarProductos(); }
+      if (r.ok) { aviso("Producto eliminado. 🗑️", "ok"); cargarProductos(); cargarStats(); }
       else aviso("No se pudo eliminar.", "error");
     }
 
@@ -430,7 +501,7 @@
       const d = await r.json();
       if (r.ok && d.token) {
         token = d.token; localStorage.setItem("token", token);
-        pintarEstado(); cargarProductos(); refrescarBadge();
+        pintarEstado(); cargarProductos(); refrescarBadge(); cargarStats();
         aviso("¡Bienvenido! 🎉", "ok");
       } else { aviso(d.error || "No se pudo.", "error"); }
     }
@@ -569,7 +640,7 @@
       const d = await r.json();
       if (r.ok) {
         aviso("¡Pedido realizado! 🎉 Total: Q" + d.pedido.total, "ok");
-        actualizarBadge(0); verCarrito();
+        actualizarBadge(0); verCarrito(); cargarProductos(); cargarStats();
         setTimeout(cerrarCarrito, 1200);
       } else { aviso(d.error || "No se pudo comprar.", "error"); }
     }
@@ -604,6 +675,7 @@
     pintarEstado();
     cargarProductos();
     refrescarBadge();
+    cargarStats();
   </script>
 </body>
 </html>

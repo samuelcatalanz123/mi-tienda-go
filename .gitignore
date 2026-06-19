@@ -1,0 +1,14 @@
+# Binario compilado
+/mi-tienda-go
+/app
+
+# Base de datos local (SQLite)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Sistema operativo / editor
+.DS_Store
+*.log
+.env
