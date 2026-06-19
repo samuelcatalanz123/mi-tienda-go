@@ -12,6 +12,7 @@ type Producto struct {
 	Stock       int     `json:"stock"`
 	Descripcion string  `json:"descripcion"`
 	Imagen      string  `json:"imagen"`
+	Categoria   string  `json:"categoria"`
 }
 
 // Store guarda la conexión a la base de datos y qué tipo es ("sqlite" o "postgres").
@@ -35,14 +36,21 @@ func NewStore(ruta string) (*Store, error) {
 			return nil, err
 		}
 	}
-	return &Store{db: db, driver: driver}, nil
+	s := &Store{db: db, driver: driver}
+	// Migración: agrega la columna "categoria" a tiendas que ya existían sin ella.
+	// Si la columna ya está, el error se ignora a propósito.
+	s.db.Exec("ALTER TABLE productos ADD COLUMN categoria TEXT NOT NULL DEFAULT 'General'")
+	return s, nil
 }
 
 // Crear guarda un producto nuevo y devuelve el producto con su id.
 func (s *Store) Crear(p Producto) (Producto, error) {
+	if p.Categoria == "" {
+		p.Categoria = "General"
+	}
 	id, err := s.insertID(
-		"INSERT INTO productos (nombre, precio, stock, descripcion, imagen) VALUES (?, ?, ?, ?, ?)",
-		p.Nombre, p.Precio, p.Stock, p.Descripcion, p.Imagen)
+		"INSERT INTO productos (nombre, precio, stock, descripcion, imagen, categoria) VALUES (?, ?, ?, ?, ?, ?)",
+		p.Nombre, p.Precio, p.Stock, p.Descripcion, p.Imagen, p.Categoria)
 	if err != nil {
 		return Producto{}, err
 	}
@@ -52,7 +60,7 @@ func (s *Store) Crear(p Producto) (Producto, error) {
 
 // Listar devuelve todos los productos.
 func (s *Store) Listar() ([]Producto, error) {
-	rows, err := s.db.Query("SELECT id, nombre, precio, stock, descripcion, imagen FROM productos ORDER BY id")
+	rows, err := s.db.Query("SELECT id, nombre, precio, stock, descripcion, imagen, categoria FROM productos ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +69,7 @@ func (s *Store) Listar() ([]Producto, error) {
 	productos := []Producto{}
 	for rows.Next() {
 		var p Producto
-		if err := rows.Scan(&p.ID, &p.Nombre, &p.Precio, &p.Stock, &p.Descripcion, &p.Imagen); err != nil {
+		if err := rows.Scan(&p.ID, &p.Nombre, &p.Precio, &p.Stock, &p.Descripcion, &p.Imagen, &p.Categoria); err != nil {
 			return nil, err
 		}
 		productos = append(productos, p)
@@ -73,8 +81,8 @@ func (s *Store) Listar() ([]Producto, error) {
 func (s *Store) Obtener(id int64) (Producto, bool, error) {
 	var p Producto
 	err := s.db.QueryRow(
-		s.rb("SELECT id, nombre, precio, stock, descripcion, imagen FROM productos WHERE id = ?"), id).
-		Scan(&p.ID, &p.Nombre, &p.Precio, &p.Stock, &p.Descripcion, &p.Imagen)
+		s.rb("SELECT id, nombre, precio, stock, descripcion, imagen, categoria FROM productos WHERE id = ?"), id).
+		Scan(&p.ID, &p.Nombre, &p.Precio, &p.Stock, &p.Descripcion, &p.Imagen, &p.Categoria)
 	if err == sql.ErrNoRows {
 		return Producto{}, false, nil
 	}
@@ -86,9 +94,12 @@ func (s *Store) Obtener(id int64) (Producto, bool, error) {
 
 // Actualizar cambia un producto existente. Devuelve false si no existía.
 func (s *Store) Actualizar(id int64, p Producto) (bool, error) {
+	if p.Categoria == "" {
+		p.Categoria = "General"
+	}
 	res, err := s.db.Exec(
-		s.rb("UPDATE productos SET nombre=?, precio=?, stock=?, descripcion=?, imagen=? WHERE id=?"),
-		p.Nombre, p.Precio, p.Stock, p.Descripcion, p.Imagen, id)
+		s.rb("UPDATE productos SET nombre=?, precio=?, stock=?, descripcion=?, imagen=?, categoria=? WHERE id=?"),
+		p.Nombre, p.Precio, p.Stock, p.Descripcion, p.Imagen, p.Categoria, id)
 	if err != nil {
 		return false, err
 	}

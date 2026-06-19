@@ -119,6 +119,20 @@
     .prod-body { padding:12px 13px 14px; display:flex; flex-direction:column; gap:6px; flex:1; }
     .prod-nombre { font-weight:700; font-size:15px; }
     .prod-desc { font-size:12.5px; color:var(--gris); line-height:1.35; }
+    .prod-cat {
+      display:inline-block; font-size:10.5px; font-weight:700; color:var(--azul);
+      background:rgba(37,99,235,.1); border-radius:20px; padding:2px 9px; width:fit-content;
+    }
+
+    /* Chips de categoría (filtros) */
+    .chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .chip {
+      border:1px solid var(--borde); background:var(--tarjeta); color:var(--tinta);
+      border-radius:20px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer;
+      transition:all .15s;
+    }
+    .chip:hover { border-color:var(--azul); }
+    .chip.activa { background:var(--azul); color:#fff; border-color:var(--azul); }
     .prod-precio { color:var(--verde); font-weight:800; font-size:18px; }
     .prod-stock {
       display:inline-block; font-size:11px; font-weight:700; color:var(--gris);
@@ -265,6 +279,8 @@
       <h3 id="tituloAdmin">➕ Agregar un producto <span class="sub">(solo tú, el dueño)</span></h3>
       <input id="pn" type="text" placeholder="Nombre del producto" />
       <input id="pd" type="text" placeholder="Descripción (opcional)" />
+      <input id="pcat" type="text" placeholder="Categoría (ej: Tecnología, Ropa, Hogar…)" list="listaCategorias" />
+      <datalist id="listaCategorias"></datalist>
       <input id="pi" type="text" placeholder="URL de la imagen (opcional)" />
       <div class="fila">
         <input id="pp" type="number" placeholder="Precio (Q)" style="flex:1;" />
@@ -288,6 +304,7 @@
           <option value="nombre">Nombre (A–Z)</option>
         </select>
       </div>
+      <div class="chips" id="chips"></div>
       <div id="productos"><p class="vacio">Cargando…</p></div>
     </div>
   </main>
@@ -313,6 +330,7 @@
     const API = "";
     let token = localStorage.getItem("token") || "";
     let productosCargados = [];
+    let categoriaActiva = "todas";
 
     // ----- Tema claro/oscuro -----
     function aplicarTema(t) {
@@ -360,6 +378,29 @@
         const r = await fetch(API + "/productos");
         productosCargados = await r.json();
       } catch (e) { productosCargados = []; }
+      pintarChips();
+      render();
+    }
+
+    function pintarChips() {
+      // categorías únicas que existen en los productos
+      const cats = [...new Set(productosCargados.map((p) => p.categoria || "General"))].sort();
+      // si la categoría activa ya no existe, volver a "todas"
+      if (categoriaActiva !== "todas" && !cats.includes(categoriaActiva)) categoriaActiva = "todas";
+      const chip = (val, txt) =>
+        `<button class="chip ${categoriaActiva === val ? "activa" : ""}" onclick="filtrarCategoria('${val.replace(/'/g, "\\'")}')">${txt}</button>`;
+      const cont = document.getElementById("chips");
+      cont.innerHTML = cats.length > 1
+        ? chip("todas", "Todas") + cats.map((c) => chip(c, c)).join("")
+        : "";
+      // llenar el datalist del formulario (sugerencias al escribir categoría)
+      document.getElementById("listaCategorias").innerHTML =
+        cats.map((c) => `<option value="${c}">`).join("");
+    }
+
+    function filtrarCategoria(cat) {
+      categoriaActiva = cat;
+      pintarChips();
       render();
     }
 
@@ -367,7 +408,8 @@
       const cont = document.getElementById("productos");
       const q = (document.getElementById("busqueda").value || "").toLowerCase().trim();
       const orden = document.getElementById("orden").value;
-      const lista = productosCargados.filter((p) => p.nombre.toLowerCase().includes(q));
+      let lista = productosCargados.filter((p) => p.nombre.toLowerCase().includes(q));
+      if (categoriaActiva !== "todas") lista = lista.filter((p) => (p.categoria || "General") === categoriaActiva);
       if (orden === "precio-asc") lista.sort((a, b) => a.precio - b.precio);
       else if (orden === "precio-desc") lista.sort((a, b) => b.precio - a.precio);
       else if (orden === "nombre") lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -400,6 +442,7 @@
         return `<div class="prod-card">
           ${img}
           <div class="prod-body">
+            <span class="prod-cat">${p.categoria || "General"}</span>
             <div class="prod-nombre">${p.nombre}</div>
             ${desc}
             <span class="prod-stock ${stockCls}">${stockTxt}</span>
@@ -417,6 +460,7 @@
       if (!token) { aviso("Inicia sesión para agregar productos.", "error"); return; }
       const nombre = document.getElementById("pn").value.trim();
       const descripcion = document.getElementById("pd").value.trim();
+      const categoria = document.getElementById("pcat").value.trim();
       const imagen = document.getElementById("pi").value.trim();
       const precio = parseFloat(document.getElementById("pp").value) || 0;
       const stock = parseInt(document.getElementById("ps").value) || 0;
@@ -425,7 +469,7 @@
       const r = await fetch(API + "/productos" + (editando ? "/" + editandoId : ""), {
         method: editando ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ nombre, descripcion, precio, stock, imagen }),
+        body: JSON.stringify({ nombre, descripcion, categoria, precio, stock, imagen }),
       });
       if (!r.ok) { aviso("No se pudo guardar.", "error"); return; }
       aviso(editando ? "¡Producto actualizado! ✏️" : "¡Producto agregado! 🎉", "ok");
@@ -439,6 +483,7 @@
       editandoId = id;
       document.getElementById("pn").value = p.nombre;
       document.getElementById("pd").value = p.descripcion || "";
+      document.getElementById("pcat").value = p.categoria || "";
       document.getElementById("pi").value = p.imagen || "";
       document.getElementById("pp").value = p.precio;
       document.getElementById("ps").value = p.stock;
@@ -450,7 +495,7 @@
 
     function cancelarEdicion() {
       editandoId = null;
-      ["pn","pd","pi","pp","ps"].forEach((id) => document.getElementById(id).value = "");
+      ["pn","pd","pcat","pi","pp","ps"].forEach((id) => document.getElementById(id).value = "");
       document.getElementById("tituloAdmin").innerHTML = '➕ Agregar un producto <span class="sub">(solo tú, el dueño)</span>';
       document.getElementById("btnGuardarProd").textContent = "Guardar producto";
       document.getElementById("btnCancelarEdit").style.display = "none";

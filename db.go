@@ -69,7 +69,8 @@ func tablas(driver string) []string {
 				precio      DOUBLE PRECISION NOT NULL,
 				stock       INTEGER NOT NULL DEFAULT 0,
 				descripcion TEXT NOT NULL DEFAULT '',
-				imagen      TEXT NOT NULL DEFAULT ''
+				imagen      TEXT NOT NULL DEFAULT '',
+				categoria   TEXT NOT NULL DEFAULT 'General'
 			)`,
 			`CREATE TABLE IF NOT EXISTS pedidos (
 				id         BIGSERIAL PRIMARY KEY,
@@ -98,7 +99,8 @@ func tablas(driver string) []string {
 			precio      REAL NOT NULL,
 			stock       INTEGER NOT NULL DEFAULT 0,
 			descripcion TEXT NOT NULL DEFAULT '',
-			imagen      TEXT NOT NULL DEFAULT ''
+			imagen      TEXT NOT NULL DEFAULT '',
+			categoria   TEXT NOT NULL DEFAULT 'General'
 		)`,
 		`CREATE TABLE IF NOT EXISTS pedidos (
 			id         INTEGER PRIMARY KEY AUTOINCREMENT,
