@@ -26,6 +26,16 @@ base de datos en la nube. 🚀
 
 🌐 **Pruébala en vivo:** https://mi-tienda-go.onrender.com
 
+<div align="center">
+
+<img src="capturas/tienda.png" width="640" alt="Mi Tienda — vista de escritorio" />
+
+<br/>
+
+<img src="capturas/tienda-movil.png" width="260" alt="Mi Tienda — vista móvil (responsive)" />
+
+</div>
+
 ---
 
 ## ✨ Funciones
